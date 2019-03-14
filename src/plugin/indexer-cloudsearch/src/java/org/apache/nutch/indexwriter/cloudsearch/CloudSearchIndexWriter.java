@@ -83,6 +83,7 @@ public class CloudSearchIndexWriter implements IndexWriter {
   private Configuration conf;
 
   private Map<String, String> csfields = new HashMap<String, String>();
+  private boolean csHasDynamicFields = false;
 
   private String endpoint;
   private String regionName;
@@ -156,6 +157,12 @@ public class CloudSearchIndexWriter implements IndexWriter {
       String indextype = ifs.getOptions().getIndexFieldType();
       LOG.info("CloudSearch index name {} of type {}", indexname, indextype);
       csfields.put(indexname, indextype);
+
+      if(indexname instanceof java.lang.String) {
+        if indexname.contains("*") {
+          csHasDynamicFields = true;
+        }
+      }
     }
 
     client = new AmazonCloudSearchDomainClient();
@@ -205,6 +212,18 @@ public class CloudSearchIndexWriter implements IndexWriter {
 
       for (final Entry<String, NutchField> e : doc) {
         String fieldname = cleanFieldName(e.getKey());
+
+      // if csHasDynamicFields
+      //   loop over csfields
+      //     if the csfieldname contains a *
+      //       if * is at the end
+      //         take csfieldnamesubstring excluding star
+      //         if fieldname begins with csfieldnamesubstring 
+      //         ###TODO: find out cloudsearch syntax for uploading dynamic fields in documents
+      //       check if substring is contained in fieldname
+      //
+      //       if the field is only a star
+
         String type = csfields.get(fieldname);
 
         // undefined in index
